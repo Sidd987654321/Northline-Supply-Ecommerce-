@@ -80,10 +80,3 @@ src/
                               BulkImport, AdminOrders
   styles/index.css          → all styling, one file, plain CSS
 ```
-
-## Notes on adding products
-
-Product `images` are plain URLs (no file upload — paste an image link, e.g.
-from Unsplash or your own CDN). `sizes` is a list of `{ size, stock }`, e.g.
-`S / 5`, `M / 8`, `L / 3`. These map directly to the `Product` model in your
-backend.
