@@ -1,62 +1,68 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 
-const Navbar = () => {
-  const { user, logout } = useAuth();
+export default function Navbar() {
+  const { user, isAdmin, logout } = useAuth();
+  const { totalCount } = useCart();
+  const { items: wishItems } = useWishlist();
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-30 bg-ink/90 backdrop-blur border-b border-line">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="font-display text-2xl tracking-tight text-bone">
-          ECOMMERCE
-        </Link>
+    <header className="navbar">
+      <div className="navbar-inner">
+        <NavLink to="/" className="brand">
+          Northline
+          <small>Supply</small>
+        </NavLink>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm text-muted">
-          <Link to="/" className="hover:text-bone transition-colors">
-            Shop
-          </Link>
-          <a href="#new" className="hover:text-bone transition-colors">
-            New Arrivals
-          </a>
-          <a href="#about" className="hover:text-bone transition-colors">
-            About
-          </a>
+        <nav>
+          <ul className="nav-links">
+            <li>
+              <NavLink to="/shop">Shop</NavLink>
+            </li>
+            <li>
+              <NavLink to="/orders">My Orders</NavLink>
+            </li>
+            {isAdmin && (
+              <li>
+                <NavLink to="/admin">Admin</NavLink>
+              </li>
+            )}
+          </ul>
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="nav-icons">
+          <NavLink to="/wishlist" className="icon-btn" aria-label="Wishlist">
+            ♥
+            {wishItems.length > 0 && (
+              <span className="badge">{wishItems.length}</span>
+            )}
+          </NavLink>
+
           {user ? (
-            <>
-              {user.role === "admin" && (
-                <button
-                  onClick={() => navigate("/admin")}
-                  className="text-xs font-mono uppercase tracking-wide text-rustLight hover:text-rust"
-                >
-                  Admin
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  logout();
-                  navigate("/");
-                }}
-                className="text-xs font-mono uppercase tracking-wide text-muted hover:text-bone"
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <Link
-              to="/login"
-              className="text-xs font-mono uppercase tracking-wide text-rustLight hover:text-rust"
+            <button
+              className="icon-btn"
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+              title={`Sign out (${user.name})`}
             >
-              Sign in
-            </Link>
+              👤
+            </button>
+          ) : (
+            <NavLink to="/login" className="icon-btn" aria-label="Sign in">
+              👤
+            </NavLink>
           )}
+
+          <NavLink to="/cart" className="bag-count">
+            🛍 {totalCount}
+          </NavLink>
         </div>
       </div>
     </header>
   );
-};
-
-export default Navbar;
+}

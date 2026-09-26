@@ -12,7 +12,7 @@ import adminOnly from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
-// Admin — must come before "/:id" so "/" isn't swallowed by the param route
+// Admin 
 router.get("/", protect, adminOnly, getAllOrders);
 router.put("/:id/status", protect, adminOnly, updateOrderStatus);
 

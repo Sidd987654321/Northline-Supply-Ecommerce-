@@ -1,29 +1,49 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useWishlist } from "../context/WishlistContext";
 
-const ProductCard = ({ product }) => {
-  const hasDiscount = product.oldPrice && product.oldPrice > product.price;
+export default function ProductCard({ product }) {
+  const { token } = useAuth();
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const navigate = useNavigate();
+
+  const totalStock = (product.sizes || []).reduce((s, x) => s + x.stock, 0);
+  const wished = isWishlisted(product._id);
+
+  const handleWishClick = async (e) => {
+    e.preventDefault();
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    toggleWishlist(product);
+  };
 
   return (
-    <Link to={`/product/${product._id}`} className="group block">
-      <div className="aspect-[3/4] bg-panel border border-line rounded-lg overflow-hidden mb-3">
-        <img
-          src={product.images[0]}
-          alt={product.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
+    <Link to={`/product/${product._id}`} className="product-card">
+      <button
+        className={`wish-toggle ${wished ? "active" : ""}`}
+        onClick={handleWishClick}
+        aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
+      >
+        {wished ? "♥" : "♡"}
+      </button>
+      <div className="product-thumb">
+        <img src={product.images?.[0]} alt={product.title} loading="lazy" />
       </div>
-      <p className="text-xs font-mono uppercase tracking-wide text-muted mb-1">
-        {product.category}
-      </p>
-      <h3 className="font-display text-lg text-bone leading-snug">{product.title}</h3>
-      <div className="flex items-center gap-2 mt-1">
-        <span className="text-bone">₹{product.price}</span>
-        {hasDiscount && (
-          <span className="text-muted line-through text-sm">₹{product.oldPrice}</span>
-        )}
+      <div className="product-info">
+        <span className="product-category">
+          {product.category} {product.subCategory ? `· ${product.subCategory}` : ""}
+        </span>
+        <span className="product-title">{product.title}</span>
+        <div className="product-price">
+          <span>₹{product.price}</span>
+          {product.oldPrice && (
+            <span className="old-price">₹{product.oldPrice}</span>
+          )}
+        </div>
+        {totalStock === 0 && <span className="stock-tag">Out of stock</span>}
       </div>
     </Link>
   );
-};
-
-export default ProductCard;
+}

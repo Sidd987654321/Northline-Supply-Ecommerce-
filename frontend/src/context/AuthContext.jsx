@@ -1,34 +1,61 @@
-import { createContext, useContext, useState } from "react";
-import api from "../api/axios.js";
+import { createContext, useContext, useEffect, useState } from "react";
+import api from "../api";
 
 const AuthContext = createContext(null);
+const STORAGE_KEY = "ns_user";
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  });
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load saved session on first render
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setUser(JSON.parse(saved));
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  const persist = (userData) => {
+    setUser(userData);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+  };
 
   const login = async (email, password) => {
-    const { data } = await api.post("/auth/login", { email, password });
-    const userData = { _id: data._id, name: data.name, email: data.email, role: data.role };
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-    return userData;
+    const data = await api.login({ email, password });
+    persist(data);
+    return data;
+  };
+
+  const register = async (name, email, password, phone) => {
+    const data = await api.register({ name, email, password, phone });
+    persist(data);
+    return data;
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     setUser(null);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  const value = {
+    user,
+    token: user?.token,
+    isAdmin: user?.role === "admin",
+    loading,
+    login,
+    register,
+    logout,
+  };
 
-export const useAuth = () => useContext(AuthContext);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
